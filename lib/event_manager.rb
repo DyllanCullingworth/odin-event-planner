@@ -3,6 +3,8 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'date'
+require 'time'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -16,6 +18,25 @@ def clean_phone_number(number)
 
   'invalid'
 end
+
+def registration_hours(datetime, hours)
+  time = Time.strptime(datetime, '%D %k:%M')
+  hours[time.strftime('%k').to_i] += 1
+end
+
+def registration_days(datetime, days)
+  date = Date.strptime(datetime, '%D')
+  days[date.strftime('%a')] += 1
+end
+
+def peaks(hash)
+  peaks = []
+  hash.each do |k, v|
+    peaks << k if v == hash.values.max
+  end
+  peaks
+end
+
 
 def legislators_by_zipcode(zipcode)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
@@ -52,18 +73,25 @@ contents = CSV.open(
 
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
+reg_hours = Hash.new 0
+reg_days = Hash.new 0
 
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
 
-  zipcode = clean_zipcode(row[:zipcode])
+  #   zipcode = clean_zipcode(row[:zipcode])
+  #   phone_number = clean_phone_number(row[:homephone])
+  #   legislators = legislators_by_zipcode(zipcode)
+  #   form_letter = erb_template.result(binding)
+  #
+  #   save_thank_you_letter(id, form_letter)
 
-  phone_number = clean_phone_number(row[:homephone])
+  registration_date = row[:regdate]
 
-  legislators = legislators_by_zipcode(zipcode)
-
-  form_letter = erb_template.result(binding)
-
-  save_thank_you_letter(id, form_letter)
+  registration_hours(registration_date, reg_hours)
+  registration_days(registration_date, reg_days)
 end
+
+peak_hours = peaks(reg_hours)
+peak_days = peaks(reg_days)
