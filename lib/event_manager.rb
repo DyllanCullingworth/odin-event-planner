@@ -3,7 +3,6 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
-require 'date'
 require 'time'
 
 def clean_zipcode(zipcode)
@@ -36,7 +35,6 @@ def peaks(hash)
   end
   peaks
 end
-
 
 def legislators_by_zipcode(zipcode)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
@@ -80,14 +78,14 @@ contents.each do |row|
   id = row[0]
   name = row[:first_name]
 
-  #   zipcode = clean_zipcode(row[:zipcode])
-  #   phone_number = clean_phone_number(row[:homephone])
-  #   legislators = legislators_by_zipcode(zipcode)
-  #   form_letter = erb_template.result(binding)
-  #
-  #   save_thank_you_letter(id, form_letter)
-
+  zipcode = clean_zipcode(row[:zipcode])
+  phone_number = clean_phone_number(row[:homephone])
   registration_date = row[:regdate]
+
+  legislators = legislators_by_zipcode(zipcode)
+  form_letter = erb_template.result(binding)
+
+  save_thank_you_letter(id, form_letter)
 
   registration_hours(registration_date, reg_hours)
   registration_days(registration_date, reg_days)
